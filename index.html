@@ -247,24 +247,25 @@ th{background:#f7fafc;color:#4a5568;font-weight:600}
         <div id="exampleContent" style="color:#a0aec0;font-size:13px">AI 生成中...</div>
       </div>
     </div>
-    <div id="round1Btns" style="margin-top:20px">
-      <button class="btn btn-green" onclick="knowWord(true)">✅ 认识</button>
-      <button class="btn btn-red" onclick="knowWord(false)">❌ 不认识</button>
-    </div>
-    <div id="nextBtnArea" class="hidden" style="margin-top:16px">
-      <button class="btn btn-next" onclick="nextWord()">下一个 →</button>
-    </div>
-  </div>
-  <div id="round2Area" class="hidden">
-    <div class="card">
-      <label style="text-align:center;font-size:15px">请根据中文和词性拼写单词</label>
-      <div style="text-align:center;margin:10px 0">
+    <div id="spellArea" class="hidden" style="margin-top:16px">
+      <div style="text-align:center;margin-bottom:10px">
         <span class="word-pos" id="spellPos"></span>
         <div class="word-cn" id="spellCn" style="margin-top:6px"></div>
       </div>
       <input type="text" id="spellInput" class="spell-input" placeholder="输入英文单词" autocomplete="off">
-      <button class="btn btn-primary" onclick="submitSpell()">提 交</button>
-      <div id="spellResult"></div>
+    </div>
+    <div id="spellResult"></div>
+    <div id="actionArea" style="margin-top:16px;min-height:130px">
+      <div id="round1Btns">
+        <button class="btn btn-green" onclick="knowWord(true)">✅ 认识</button>
+        <button class="btn btn-red" onclick="knowWord(false)">❌ 不认识</button>
+      </div>
+      <div id="spellSubmitBtn" class="hidden">
+        <button class="btn btn-primary" onclick="submitSpell()">提 交</button>
+      </div>
+      <div id="nextBtnArea" class="hidden">
+        <button class="btn btn-next" onclick="nextWord()">下一个 →</button>
+      </div>
     </div>
   </div>
 </div>
@@ -319,18 +320,23 @@ async function showRedeemRecords(){
   try{const r=await fetch(API_BASE+'/api/vocab/teacher/redeems');const d=await r.json();
   const list=document.getElementById('teacherRedeemList');list.innerHTML='';
   if(!d.redeems||!d.redeems.length){list.innerHTML='<p style="color:#a0aec0;text-align:center;padding:20px">暂无兑换记录</p>';return}
-  d.redeems.forEach(rec=>{
+  d.redeems.forEach((rec,idx)=>{
+    const isCompleted=rec.status==='completed';
     const div=document.createElement('div');
     div.style.cssText='padding:12px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;gap:10px';
-    div.innerHTML=`<div style="flex:1"><div style="font-weight:700;font-size:14px">${rec.studentName||rec.sid} 兑换了 ${rec.giftName}</div><div style="font-size:12px;color:#718096;margin-top:3px">${rec.time} · 扣除${rec.points}积分</div></div>${!rec.read?'<span style="background:#f5576c;color:#fff;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:700">新</span>':''}`;
+    div.innerHTML=`<div style="flex:1"><div style="font-weight:700;font-size:14px">${rec.studentName||rec.sid} 兑换了 ${rec.giftName}</div><div style="font-size:12px;color:#718096;margin-top:3px">${rec.time} · 扣除${rec.points}积分${isCompleted?' · 已兑换':''}</div></div>${isCompleted?'<span style="background:#48bb78;color:#fff;border-radius:8px;padding:3px 10px;font-size:12px;font-weight:700">已兑换</span>':`<span style="background:#ed8936;color:#fff;border-radius:8px;padding:3px 10px;font-size:12px;font-weight:700;margin-right:8px">等待兑换</span><button onclick="completeRedeem(${idx})" style="background:#3182ce;color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">完成</button>`}${!rec.read?'<span style="background:#f5576c;color:#fff;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:700;margin-left:6px">新</span>':''}`;
     list.appendChild(div);
   });
-  // 标记已读
   if(d.unread>0){
     await fetch(API_BASE+'/api/vocab/teacher/redeems/read',{method:'POST'});
     document.getElementById('redeemBadge').classList.add('hidden');
   }
   }catch(e){toast('加载失败')}
+}
+async function completeRedeem(idx){
+  if(!confirm('确认已将礼品交给学生？'))return;
+  try{const r=await fetch(API_BASE+'/api/vocab/teacher/redeem/complete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({index:idx})});const d=await r.json();
+  if(d.ok){toast('已标记完成');sfxCorrect();showRedeemRecords()}else toast(d.msg||'操作失败')}catch(e){toast('网络错误')}
 }
 async function studentLogin(){
   sfxClick();const sid=document.getElementById('stuSid').value.trim();if(!sid){toast('请输入学号');return}
@@ -348,8 +354,14 @@ async function addStudent(){
 async function deleteStudent(sid){if(!confirm('确定删除该学生？'))return;try{await fetch(API_BASE+'/api/vocab/teacher/students/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid})});loadStats()}catch(e){}}
 async function loadStats(){
   try{const r=await fetch(API_BASE+'/api/vocab/teacher/stats');const d=await r.json();const tb=document.getElementById('statsBody');tb.innerHTML='';
-  (d.stats||[]).forEach(s=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${s.sid}</td><td>${s.name}</td><td><span class="score-badge">${s.totalScore}</span></td><td>${s.totalWords}</td><td>${s.studyDays}</td><td style="font-size:11px">${s.lastStudy}</td><td><button onclick="deleteStudent('${s.sid}')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:12px">删除</button></td>`;tb.appendChild(tr)});
+  (d.stats||[]).forEach(s=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${s.sid}</td><td>${s.name}</td><td><span class="score-badge">${s.totalScore}</span></td><td>${s.totalWords}</td><td>${s.studyDays}</td><td style="font-size:11px">${s.lastStudy}</td><td style="white-space:nowrap"><button onclick="adjustScore('${s.sid}',10)" style="background:#48bb78;color:#fff;border:none;border-radius:4px;padding:2px 6px;font-size:11px;cursor:pointer;margin-right:3px">+10</button><button onclick="adjustScore('${s.sid}',-10)" style="background:#ed8936;color:#fff;border:none;border-radius:4px;padding:2px 6px;font-size:11px;cursor:pointer;margin-right:3px">-10</button><button onclick="deleteStudent('${s.sid}')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:12px">删除</button></td>`;tb.appendChild(tr)});
   if(!(d.stats||[]).length)tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#a0aec0;padding:20px">暂无学生</td></tr>'}catch(e){}
+}
+async function adjustScore(sid,delta){
+  const action=delta>0?'增加':'扣除';
+  if(!confirm(`确定${action} ${Math.abs(delta)} 积分？`))return;
+  try{const r=await fetch(API_BASE+'/api/vocab/teacher/student/adjust-score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid,delta})});const d=await r.json();
+  if(d.ok){toast('已调整，当前积分：'+d.score);sfxCorrect();loadStats()}else toast(d.msg||'操作失败')}catch(e){toast('网络错误')}
 }
 
 async function addGift(){
@@ -361,9 +373,25 @@ async function addGift(){
 }
 async function loadGiftManage(){
   try{const r=await fetch(API_BASE+'/api/vocab/gifts');const d=await r.json();const list=document.getElementById('giftManageList');list.innerHTML='';
-  (d.gifts||[]).forEach(g=>{const div=document.createElement('div');div.style.cssText='display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid #edf2f7;font-size:13px';div.innerHTML=`<span style="font-size:24px">${g.image?'<img src="'+g.image+'" style="width:36px;height:36px;object-fit:cover;border-radius:6px">':'🎁'}</span><span style="flex:1;font-weight:600">${g.name}</span><span style="color:#f5576c;font-weight:700">${g.points}积分</span><button onclick="editGift('${g.id}','${g.name}',${g.points},'${g.image||''}')" style="background:none;border:none;color:#3182ce;cursor:pointer;margin-right:8px">编辑</button><button onclick="deleteGift('${g.id}')" style="background:none;border:none;color:#e53e3e;cursor:pointer">删除</button>`;list.appendChild(div)});
+  (d.gifts||[]).forEach(g=>{const div=document.createElement('div');
+  div.style.cssText='display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid #edf2f7;font-size:13px';
+  div.innerHTML=`<span style="font-size:24px">${g.image?'<img src="'+g.image+'" style="width:36px;height:36px;object-fit:cover;border-radius:6px">':'🎁'}</span><span style="flex:1;font-weight:600">${g.name}</span><span style="color:#f5576c;font-weight:700">${g.points}积分</span><button data-action="edit" data-id="${g.id}" style="background:none;border:none;color:#3182ce;cursor:pointer;margin-right:8px">编辑</button><button data-action="delete" data-id="${g.id}" style="background:none;border:none;color:#e53e3e;cursor:pointer">删除</button>`;
+  list.appendChild(div)});
   if(!(d.gifts||[]).length)list.innerHTML='<p style="color:#a0aec0;font-size:13px;text-align:center;padding:10px">暂无礼品</p>'}catch(e){}
 }
+document.getElementById('giftManageList').addEventListener('click',function(e){
+  const btn=e.target.closest('button');if(!btn)return;
+  const id=btn.dataset.id;const action=btn.dataset.action;
+  if(action==='edit'){
+    fetch(API_BASE+'/api/vocab/gifts').then(r=>r.json()).then(d=>{
+      const g=(d.gifts||[]).find(x=>x.id===id);if(!g)return;
+      editGift(g.id,g.name,g.points,g.image||'');
+    });
+  }else if(action==='delete'){
+    if(!confirm('确定删除该礼品？'))return;
+    fetch(API_BASE+'/api/vocab/teacher/gift/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).then(()=>loadGiftManage());
+  }
+});
 function editGift(id,name,points,image){
   document.getElementById('editGiftId').value=id;
   document.getElementById('editGiftName').value=name;
@@ -431,8 +459,10 @@ function startStudy(groupIdx){
   saveProgress(currentUnitIdx,groupIdx);
   showPage('studyPage');
   document.getElementById('round1Btns').classList.remove('hidden');
-  document.getElementById('round2Area').classList.add('hidden');
+  document.getElementById('spellSubmitBtn').classList.add('hidden');
   document.getElementById('nextBtnArea').classList.add('hidden');
+  document.getElementById('spellArea').classList.add('hidden');
+  document.getElementById('spellResult').innerHTML='';
   document.getElementById('roundLabel').textContent='第一轮 · 认识单词';
   nextWord();
 }
@@ -463,7 +493,7 @@ function nextWord(){
   document.getElementById('spellInput').value='';
   if(s.queue.length===0){
     if(s.reviewQueue.length>0){s.queue=s.reviewQueue;s.reviewQueue=[];toast('复习不认识的单词')}
-    else if(s.round===1){s.round=2;s.queue=[...s.words];s.reviewQueue=[];document.getElementById('round1Btns').classList.add('hidden');document.getElementById('round2Area').classList.remove('hidden');document.getElementById('roundLabel').textContent='第二轮 · 拼写单词';toast('进入拼写环节')}
+    else if(s.round===1){s.round=2;s.queue=[...s.words];s.reviewQueue=[];document.getElementById('round1Btns').classList.add('hidden');document.getElementById('spellArea').classList.remove('hidden');document.getElementById('spellSubmitBtn').classList.remove('hidden');document.getElementById('roundLabel').textContent='第二轮 · 拼写单词';toast('进入拼写环节')}
     else{finishStudy();return}
   }
   s.currentWord=s.queue.shift();
@@ -533,6 +563,7 @@ function submitSpell(){
   document.getElementById('wordEn').textContent=s.currentWord.w;
   document.getElementById('wordDetail').classList.remove('hidden');
   loadExample(s.currentWord);
+  document.getElementById('spellSubmitBtn').classList.add('hidden');
   document.getElementById('nextBtnArea').classList.remove('hidden');
 }
 document.getElementById('spellInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitSpell()});
