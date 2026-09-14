@@ -162,6 +162,17 @@ th{background:#f7fafc;color:#4a5568;font-weight:600}
     <div class="quick-btn" onclick="sfxClick();showPage('shopPage');loadShop()"><div class="icon">🎁</div><div class="label">积分商城</div></div>
     <div class="quick-btn" onclick="toast('功能开发中')"><div class="icon">🏆</div><div class="label">排行榜</div></div>
   </div>
+  <div id="continueArea" class="hidden" style="margin-bottom:14px">
+    <div class="card" style="background:linear-gradient(135deg,#fa709a,#fee140);color:#fff;cursor:pointer;padding:16px" onclick="continueStudy()">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:16px;font-weight:700">📚 继续上次学习</div>
+          <div id="continueInfo" style="font-size:13px;opacity:.9;margin-top:4px"></div>
+        </div>
+        <div style="font-size:28px">→</div>
+      </div>
+    </div>
+  </div>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
     <span class="section-title">📖 选择单元</span>
     <span class="logout" onclick="logout()">退出</span>
@@ -204,17 +215,17 @@ th{background:#f7fafc;color:#4a5568;font-weight:600}
       <div class="word-pos" id="wordPos"></div>
       <div class="word-cn" id="wordCn"></div>
       <div class="example-box" id="exampleBox">
-        <div class="ex-label">💡 例句与用法</div>
+        <div class="ex-label">💡 例句与用法 <button onclick="speakExample()" style="background:none;border:none;cursor:pointer;font-size:14px">🔊</button></div>
         <div id="exampleContent" style="color:#a0aec0;font-size:13px">AI 生成中...</div>
       </div>
     </div>
-  </div>
-  <div id="round1Btns">
-    <button class="btn btn-green" onclick="knowWord(true)">✅ 认识</button>
-    <button class="btn btn-red" onclick="knowWord(false)">❌ 不认识</button>
-  </div>
-  <div id="nextBtnArea" class="hidden">
-    <button class="btn btn-next" onclick="nextWord()">下一个 →</button>
+    <div id="round1Btns" style="margin-top:20px">
+      <button class="btn btn-green" onclick="knowWord(true)">✅ 认识</button>
+      <button class="btn btn-red" onclick="knowWord(false)">❌ 不认识</button>
+    </div>
+    <div id="nextBtnArea" class="hidden" style="margin-top:16px">
+      <button class="btn btn-next" onclick="nextWord()">下一个 →</button>
+    </div>
   </div>
   <div id="round2Area" class="hidden">
     <div class="card">
@@ -309,6 +320,15 @@ async function loadStudentHome(){
   try{const r=await fetch(API_BASE+'/api/vocab/student/record?sid='+currentStudent.sid);const d=await r.json();const p=d.progress||{};
   document.getElementById('stuScore').textContent=p.totalScore||0;document.getElementById('stuWords').textContent=p.totalWords||0;document.getElementById('stuDays').textContent=p.records?p.records.length:0;
   const done={};(p.records||[]).forEach(rec=>{if(rec.unit&&rec.group!==undefined)done[rec.unit+'_'+rec.group]=true});localStorage.setItem('vocab_done',JSON.stringify(done))}catch(e){}
+  // 显示继续学习
+  const prog=loadProgress();
+  if(prog&&VOCAB_BOOK.units[prog.unitIdx]){
+    const unit=VOCAB_BOOK.units[prog.unitIdx];
+    document.getElementById('continueInfo').textContent=unit.title+' · 第'+(prog.groupIdx+1)+'组';
+    document.getElementById('continueArea').classList.remove('hidden');
+  }else{
+    document.getElementById('continueArea').classList.add('hidden');
+  }
   renderUnits();
 }
 function renderUnits(){const list=document.getElementById('unitList');list.innerHTML='';VOCAB_BOOK.units.forEach((u,i)=>{const div=document.createElement('div');div.className='unit';div.onclick=()=>{sfxClick();currentUnitIdx=i;showPage('groupPage');renderGroups()};div.innerHTML=`<div><div class="u-title">${u.title}</div><div class="u-info">共 ${u.words.length} 词 · ${Math.ceil(u.words.length/WORDS_PER_GROUP)} 组</div></div><div class="u-arrow">›</div>`;list.appendChild(div)})}
@@ -337,12 +357,31 @@ for(let i=0;i<total;i++){const cell=document.createElement('div');cell.className
 function startStudy(groupIdx){
   currentGroupIdx=groupIdx;const unit=VOCAB_BOOK.units[currentUnitIdx];const words=unit.words.slice(groupIdx*WORDS_PER_GROUP,groupIdx*WORDS_PER_GROUP+WORDS_PER_GROUP);
   studyState={words,round:1,queue:[...words],reviewQueue:[],currentWord:null,spellCorrect:0,aiCache:{},waitingNext:false};
+  saveProgress(currentUnitIdx,groupIdx);
   showPage('studyPage');
   document.getElementById('round1Btns').classList.remove('hidden');
   document.getElementById('round2Area').classList.add('hidden');
   document.getElementById('nextBtnArea').classList.add('hidden');
   document.getElementById('roundLabel').textContent='第一轮 · 认识单词';
   nextWord();
+}
+
+// 记忆功能
+function saveProgress(unitIdx,groupIdx){
+  if(!currentStudent)return;
+  localStorage.setItem('vocab_progress_'+currentStudent.sid,JSON.stringify({unitIdx,groupIdx,time:Date.now()}));
+}
+function loadProgress(){
+  if(!currentStudent)return null;
+  const data=localStorage.getItem('vocab_progress_'+currentStudent.sid);
+  return data?JSON.parse(data):null;
+}
+function continueStudy(){
+  sfxClick();
+  const p=loadProgress();
+  if(!p){toast('没有学习记录');return}
+  currentUnitIdx=p.unitIdx;
+  startStudy(p.groupIdx);
 }
 
 function nextWord(){
@@ -376,7 +415,7 @@ function renderWord(){
   }
   document.getElementById('wordPos').textContent=w.pos||'';
   document.getElementById('wordCn').textContent=w.c;
-  document.getElementById('exampleContent').innerHTML='AI 生成中...';
+  document.getElementById('exampleContent').innerHTML='加载中...';
   const total=s.words.length*2;
   const done=(s.round===1?(s.words.length-s.queue.length-s.reviewQueue.length):(s.words.length+s.words.length-s.queue.length-s.reviewQueue.length));
   document.getElementById('progressFill').style.width=Math.min(100,done/total*100)+'%';
@@ -393,13 +432,21 @@ function knowWord(known){
   document.getElementById('nextBtnArea').classList.remove('hidden');
 }
 
-async function loadExample(word){
-  const s=studyState;const key=word.w;
-  if(s.aiCache[key]){renderExample(s.aiCache[key]);return}
-  try{const r=await fetch(API_BASE+'/api/vocab/ai/example',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({word:word.w,chinese:word.c})});const d=await r.json();
-  if(d.ok){s.aiCache[key]=d;if(s.currentWord&&s.currentWord.w===key)renderExample(d)}else document.getElementById('exampleContent').innerHTML='<span style="color:#a0aec0">例句生成失败</span>'}catch(e){document.getElementById('exampleContent').innerHTML='<span style="color:#a0aec0">例句生成失败</span>'}
+function loadExample(word){
+  if(word.example){
+    renderExample({example:word.example,trans:word.trans,usage:word.usage});
+  }else{
+    document.getElementById('exampleContent').innerHTML='<span style="color:#a0aec0">暂无例句</span>';
+  }
 }
-function renderExample(d){document.getElementById('exampleContent').innerHTML=`<div class="ex-en">${d.example||'—'}</div><div class="ex-cn">${d.trans||''}</div><div class="ex-usage">📌 ${d.usage||''}</div>`}
+function renderExample(d){
+  document.getElementById('exampleContent').innerHTML=`<div class="ex-en">${d.example||'—'}</div><div class="ex-cn">${d.trans||''}</div><div class="ex-usage">📌 ${d.usage||''}</div>`;
+  if(d.example)setTimeout(()=>speak(d.example),600);
+}
+function speakExample(){
+  const en=document.querySelector('#exampleContent .ex-en');
+  if(en)speak(en.textContent);
+}
 
 function submitSpell(){
   sfxSubmit();const s=studyState;if(s.waitingNext)return;
@@ -421,6 +468,11 @@ async function finishStudy(){
   const s=studyState;const unit=VOCAB_BOOK.units[currentUnitIdx];const score=10+s.spellCorrect;const words=s.words.length;
   try{await fetch(API_BASE+'/api/vocab/student/record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid:currentStudent.sid,unit:unit.title,group:currentGroupIdx,words,score})})}catch(e){}
   const done=JSON.parse(localStorage.getItem('vocab_done')||'{}');done[unit.title+'_'+currentGroupIdx]=true;localStorage.setItem('vocab_done',JSON.stringify(done));
+  // 更新记忆：有下一组就存下一组，否则清除
+  const totalGroups=Math.ceil(unit.words.length/WORDS_PER_GROUP);
+  if(currentGroupIdx+1<totalGroups){saveProgress(currentUnitIdx,currentGroupIdx+1)}
+  else if(currentUnitIdx+1<VOCAB_BOOK.units.length){saveProgress(currentUnitIdx+1,0)}
+  else{localStorage.removeItem('vocab_progress_'+currentStudent.sid)}
   document.getElementById('completeInfo').innerHTML=`本组 <strong>${words}</strong> 词 · 获得 <strong style="color:#f5576c;font-size:20px">${score}</strong> 积分<br>拼写正确 ${s.spellCorrect}/${words}`;
   showPage('completePage');sfxCorrect();
 }
