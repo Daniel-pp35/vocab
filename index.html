@@ -27,6 +27,8 @@ h1{font-size:28px;text-align:center;margin:16px 0 4px;color:#fff;font-weight:800
 .btn-next:hover{background:#4338ca}
 .btn-row{display:flex;gap:10px}
 .btn-row .btn{flex:1;margin-top:0}
+#nextBtnArea .btn{margin-top:0}
+#spellSubmitBtn .btn{margin-top:0}
 input[type=text],input[type=password],input[type=number]{width:100%;padding:14px 16px;border:1.5px solid #e2e8f0;border-radius:14px;font-size:16px;outline:none;transition:.2s;background:#f8fafc}
 input:focus{border-color:#4f46e5;background:#fff;box-shadow:0 0 0 3px rgba(79,70,229,.1)}
 label{display:block;font-size:13px;color:#64748b;margin-bottom:6px;font-weight:600;letter-spacing:.3px}
@@ -271,7 +273,7 @@ th{background:#f8fafc;color:#64748b;font-weight:600;font-size:12px;letter-spacin
       <input type="text" id="spellInput" class="spell-input" placeholder="输入英文单词" autocomplete="off">
     </div>
     <div id="spellResult"></div>
-    <div id="actionArea" style="margin-top:auto;padding-top:20px">
+    <div id="actionArea" style="margin-top:auto;padding-top:20px;height:56px;overflow:hidden">
       <div id="round1Btns" class="btn-row">
         <button class="btn btn-green" onclick="knowWord(true)">✅ 认识</button>
         <button class="btn btn-red" onclick="knowWord(false)">❌ 不认识</button>
