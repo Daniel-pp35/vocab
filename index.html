@@ -395,7 +395,9 @@ function nextWord(){
     else if(s.round===1){s.round=2;s.queue=[...s.words];s.reviewQueue=[];document.getElementById('round1Btns').classList.add('hidden');document.getElementById('round2Area').classList.remove('hidden');document.getElementById('roundLabel').textContent='第二轮 · 拼写单词';toast('进入拼写环节')}
     else{finishStudy();return}
   }
-  s.currentWord=s.queue.shift();renderWord();
+  s.currentWord=s.queue.shift();
+  if(s.round===1){document.getElementById('round1Btns').classList.remove('hidden')}
+  renderWord();
 }
 
 function renderWord(){
