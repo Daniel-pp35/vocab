@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>初中英语背单词 · 外研版</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f0f4f8;color:#2d3748;min-height:100vh}
+.page{display:none;max-width:640px;margin:0 auto;padding:16px}
+.page.active{display:block}
+h1{font-size:22px;text-align:center;margin:20px 0 8px;color:#1a365d}
+.subtitle{text-align:center;color:#718096;font-size:13px;margin-bottom:24px}
+.card{background:#fff;border-radius:14px;padding:20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;transition:.2s;margin-top:10px}
+.btn-primary{background:#3182ce;color:#fff}
+.btn-primary:active{background:#2c5282}
+.btn-green{background:#38a169;color:#fff}
+.btn-green:active{background:#276749}
+.btn-red{background:#e53e3e;color:#fff}
+.btn-red:active{background:#c53030}
+.btn-gray{background:#e2e8f0;color:#4a5568}
+.btn-outline{background:#fff;color:#3182ce;border:2px solid #3182ce}
+input[type=text],input[type=password],input[type=number]{width:100%;padding:12px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:16px;outline:none;transition:.2s}
+input:focus{border-color:#3182ce}
+label{display:block;font-size:14px;color:#4a5568;margin-bottom:6px;font-weight:600}
+.tabs{display:flex;gap:8px;margin-bottom:20px}
+.tab{flex:1;padding:12px;text-align:center;background:#e2e8f0;border-radius:10px;cursor:pointer;font-weight:600;font-size:15px}
+.tab.active{background:#3182ce;color:#fff}
+/* 登录页 */
+#loginPage{padding-top:60px}
+.logo{text-align:center;font-size:48px;margin-bottom:16px}
+/* 老师端 */
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.topbar h2{font-size:18px;color:#1a365d}
+.logout{font-size:13px;color:#718096;cursor:pointer;text-decoration:underline}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 6px;text-align:left;border-bottom:1px solid #edf2f7}
+th{background:#f7fafc;color:#4a5568;font-weight:600}
+.score-badge{display:inline-block;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:8px;font-weight:700;font-size:12px}
+/* 学生端 */
+.stu-header{background:linear-gradient(135deg,#3182ce,#2c5282);color:#fff;border-radius:14px;padding:18px;margin-bottom:14px}
+.stu-header .name{font-size:18px;font-weight:700}
+.stu-header .stats{display:flex;gap:16px;margin-top:10px;font-size:13px}
+.stu-header .stat{text-align:center}
+.stu-header .stat .num{font-size:22px;font-weight:700}
+.unit-list .unit{background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.unit-list .unit:active{background:#ebf8ff}
+.unit .u-title{font-weight:600;font-size:15px}
+.unit .u-info{font-size:12px;color:#718096;margin-top:2px}
+.unit .u-arrow{color:#cbd5e0;font-size:20px}
+.group-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.group-cell{aspect-ratio:1;background:#e2e8f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;cursor:pointer;color:#4a5568}
+.group-cell.done{background:#c6f6d5;color:#22543d}
+.group-cell.current{background:#3182ce;color:#fff}
+/* 背单词页 */
+.word-card{background:#fff;border-radius:16px;padding:28px 20px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.08);margin-bottom:16px;min-height:200px;display:flex;flex-direction:column;justify-content:center}
+.word-en{font-size:36px;font-weight:800;color:#1a365d;margin-bottom:6px;word-break:break-word}
+.word-pos{font-size:14px;color:#3182ce;font-weight:600;margin-bottom:4px}
+.word-cn{font-size:20px;color:#2d3748;margin-bottom:12px}
+.word-phonetic{font-size:15px;color:#a0aec0;margin-bottom:10px}
+.speak-btn{background:#ebf8ff;color:#3182ce;border:none;padding:8px 16px;border-radius:20px;font-size:14px;cursor:pointer;font-weight:600}
+.example-box{background:#f7fafc;border-radius:10px;padding:12px;margin-top:14px;text-align:left;font-size:14px;line-height:1.7}
+.example-box .ex-label{color:#3182ce;font-weight:700;font-size:12px;margin-bottom:4px}
+.example-box .ex-en{color:#2d3748}
+.example-box .ex-cn{color:#718096;font-size:13px}
+.example-box .ex-usage{color:#805ad5;margin-top:6px;font-size:13px}
+.progress-bar{height:6px;background:#e2e8f0;border-radius:3px;margin-bottom:16px;overflow:hidden}
+.progress-fill{height:100%;background:#3182ce;border-radius:3px;transition:.3s}
+.round-label{text-align:center;font-size:13px;color:#718096;margin-bottom:8px;font-weight:600}
+.spell-input{text-align:center;font-size:22px;font-weight:700;letter-spacing:2px}
+.spell-result{margin-top:12px;padding:12px;border-radius:10px;font-size:15px;font-weight:600;text-align:center}
+.spell-result.correct{background:#c6f6d5;color:#22543d}
+.spell-result.wrong{background:#fed7d7;color:#822727}
+.complete-card{text-align:center;padding:30px}
+.complete-card .emoji{font-size:56px;margin-bottom:12px}
+.complete-card h3{font-size:22px;color:#1a365d;margin-bottom:8px}
+.complete-card p{color:#718096;margin-bottom:16px}
+.back-btn{background:none;border:none;color:#3182ce;font-size:15px;cursor:pointer;font-weight:600;margin-bottom:12px}
+.hidden{display:none!important}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#2d3748;color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;z-index:999;opacity:0;transition:.3s}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- 登录页 -->
+<div id="loginPage" class="page active">
+  <div class="logo">📚</div>
+  <h1>初中英语背单词</h1>
+  <p class="subtitle">外研版2024新版 · 七年级上册</p>
+  <p style="text-align:center;color:#a0aec0;font-size:12px;margin-bottom:24px">Developed by Daniel · 曾智威</p>
+  <div class="card">
+    <div class="tabs">
+      <div class="tab active" data-role="student">学生登录</div>
+      <div class="tab" data-role="teacher">老师登录</div>
+    </div>
+    <div id="studentLogin">
+      <label>学号</label>
+      <input type="text" id="stuSid" placeholder="请输入学号" maxlength="20">
+      <button class="btn btn-primary" onclick="studentLogin()">登录</button>
+    </div>
+    <div id="teacherLogin" class="hidden">
+      <label>老师密码</label>
+      <input type="password" id="teacherPwd" placeholder="请输入老师密码">
+      <button class="btn btn-primary" onclick="teacherLogin()">登录</button>
+    </div>
+  </div>
+</div>
+
+<!-- 老师端 -->
+<div id="teacherPage" class="page">
+  <div class="topbar">
+    <h2>👨‍🏫 老师管理端</h2>
+    <span class="logout" onclick="logout()">退出</span>
+  </div>
+  <div class="card">
+    <label>添加学生</label>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="newSid" placeholder="学号（如2024001）" style="flex:1">
+      <input type="text" id="newName" placeholder="姓名" style="flex:1">
+    </div>
+    <button class="btn btn-green" onclick="addStudent()">添加学生</button>
+  </div>
+  <div class="card">
+    <h3 style="font-size:16px;margin-bottom:10px">📊 学生学习数据</h3>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>学号</th><th>姓名</th><th>积分</th><th>背词数</th><th>学习天数</th><th>上次学习</th><th></th></tr></thead>
+        <tbody id="statsBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <p style="text-align:center;color:#cbd5e0;font-size:11px;margin-top:8px;padding-bottom:16px">© Daniel · 曾智威 出品</p>
+</div>
+
+<!-- 学生端首页 -->
+<div id="studentPage" class="page">
+  <div class="stu-header">
+    <div class="name" id="stuName">同学</div>
+    <div class="stats">
+      <div class="stat"><div class="num" id="stuScore">0</div><div>总积分</div></div>
+      <div class="stat"><div class="num" id="stuWords">0</div><div>背词数</div></div>
+      <div class="stat"><div class="num" id="stuDays">0</div><div>学习天数</div></div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <h2 style="font-size:17px">选择单元</h2>
+    <span class="logout" onclick="logout()">退出</span>
+  </div>
+  <div class="unit-list" id="unitList"></div>
+  <p style="text-align:center;color:#cbd5e0;font-size:11px;margin-top:20px;padding-bottom:16px">© Daniel · 曾智威 出品</p>
+</div>
+
+<!-- 分组选择页 -->
+<div id="groupPage" class="page">
+  <button class="back-btn" onclick="showPage('studentPage')">← 返回单元</button>
+  <h2 id="groupTitle" style="font-size:18px;margin-bottom:14px"></h2>
+  <div class="card">
+    <p style="font-size:13px;color:#718096;margin-bottom:8px">每10个单词为一组，点击开始练习</p>
+    <div class="group-grid" id="groupGrid"></div>
+  </div>
+</div>
+
+<!-- 背单词页 -->
+<div id="studyPage" class="page">
+  <button class="back-btn" onclick="confirmQuit()">← 退出练习</button>
+  <div class="round-label" id="roundLabel">第一轮 · 认识单词</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="word-card" id="wordCard">
+    <div class="word-en" id="wordEn"></div>
+    <div class="word-phonetic" id="wordPhonetic"></div>
+    <button class="speak-btn" onclick="speakWord()">🔊 播放发音</button>
+    <div id="wordDetail" class="hidden" style="margin-top:14px">
+      <div class="word-pos" id="wordPos"></div>
+      <div class="word-cn" id="wordCn"></div>
+      <div class="example-box" id="exampleBox">
+        <div class="ex-label">💡 例句与用法</div>
+        <div id="exampleContent" style="color:#a0aec0;font-size:13px">生成中...</div>
+      </div>
+    </div>
+  </div>
+  <!-- 第一轮按钮 -->
+  <div id="round1Btns">
+    <button class="btn btn-green" onclick="knowWord(true)">✅ 认识</button>
+    <button class="btn btn-red" onclick="knowWord(false)">❌ 不认识</button>
+  </div>
+  <!-- 第二轮拼写 -->
+  <div id="round2Area" class="hidden">
+    <div class="card">
+      <label style="text-align:center;font-size:15px">请拼写这个单词</label>
+      <input type="text" id="spellInput" class="spell-input" placeholder="输入英文单词" autocomplete="off">
+      <button class="btn btn-primary" onclick="submitSpell()">提交</button>
+      <div id="spellResult"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 完成页 -->
+<div id="completePage" class="page">
+  <div class="card complete-card">
+    <div class="emoji">🎉</div>
+    <h3>本组练习完成！</h3>
+    <p id="completeInfo"></p>
+    <button class="btn btn-primary" onclick="showPage('groupPage');renderGroups()">继续下一组</button>
+    <button class="btn btn-outline" onclick="showPage('studentPage');loadStudentHome()">返回首页</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="vocab_data.js"></script>
+<script>
+// ===== 配置 =====
+const API_BASE = "https://vocab-ai.daniel7829399.workers.dev";
+const WORDS_PER_GROUP = 10;
+
+// ===== 状态 =====
+let currentRole = null;
+let currentStudent = null;
+let currentUnitIdx = -1;
+let currentGroupIdx = -1;
+let studyState = null;
+
+// ===== 工具 =====
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function speak(text){if('speechSynthesis' in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.85;speechSynthesis.speak(u)}}
+function speakWord(){if(studyState&&studyState.currentWord)speak(studyState.currentWord.w)}
+
+// ===== 登录 tab 切换 =====
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const role=t.dataset.role;
+    document.getElementById('studentLogin').classList.toggle('hidden',role!=='student');
+    document.getElementById('teacherLogin').classList.toggle('hidden',role!=='teacher');
+  };
+});
+
+// ===== 老师登录 =====
+async function teacherLogin(){
+  const pwd=document.getElementById('teacherPwd').value;
+  try{
+    const r=await fetch(API_BASE+'/api/vocab/teacher/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});
+    const d=await r.json();
+    if(d.ok){currentRole='teacher';showPage('teacherPage');loadStats();}
+    else toast(d.msg||'登录失败');
+  }catch(e){toast('网络错误，请检查API地址')}
+}
+
+// ===== 学生登录 =====
+async function studentLogin(){
+  const sid=document.getElementById('stuSid').value.trim();
+  if(!sid){toast('请输入学号');return}
+  try{
+    const r=await fetch(API_BASE+'/api/vocab/student/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid})});
+    const d=await r.json();
+    if(d.ok){
+      currentStudent=d.student;
+      currentRole='student';
+      localStorage.setItem('vocab_sid',sid);
+      showPage('studentPage');
+      loadStudentHome();
+    }else toast(d.msg||'学号不存在');
+  }catch(e){toast('网络错误，请检查API地址')}
+}
+
+function logout(){currentRole=null;currentStudent=null;localStorage.removeItem('vocab_sid');showPage('loginPage')}
+
+// ===== 老师端：添加学生 =====
+async function addStudent(){
+  const sid=document.getElementById('newSid').value.trim();
+  const name=document.getElementById('newName').value.trim();
+  if(!sid||!name){toast('请填写学号和姓名');return}
+  try{
+    const r=await fetch(API_BASE+'/api/vocab/teacher/students',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid,name})});
+    const d=await r.json();
+    if(d.ok){toast('添加成功');document.getElementById('newSid').value='';document.getElementById('newName').value='';loadStats();}
+    else toast(d.msg||'添加失败');
+  }catch(e){toast('网络错误')}
+}
+
+// ===== 老师端：删除学生 =====
+async function deleteStudent(sid){
+  if(!confirm('确定删除该学生？所有学习记录将被清除'))return;
+  try{
+    await fetch(API_BASE+'/api/vocab/teacher/students/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid})});
+    loadStats();
+  }catch(e){toast('网络错误')}
+}
+
+// ===== 老师端：加载数据 =====
+async function loadStats(){
+  try{
+    const r=await fetch(API_BASE+'/api/vocab/teacher/stats');
+    const d=await r.json();
+    const tbody=document.getElementById('statsBody');
+    tbody.innerHTML='';
+    if(d.stats&&d.stats.length){
+      d.stats.forEach(s=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${s.sid}</td><td>${s.name}</td><td><span class="score-badge">${s.totalScore}</span></td><td>${s.totalWords}</td><td>${s.studyDays}</td><td style="font-size:11px">${s.lastStudy}</td><td><button onclick="deleteStudent('${s.sid}')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:12px">删除</button></td>`;
+        tbody.appendChild(tr);
+      });
+    }else{
+      tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#a0aec0;padding:20px">暂无学生</td></tr>';
+    }
+  }catch(e){toast('加载失败')}
+}
+
+// ===== 学生端首页 =====
+async function loadStudentHome(){
+  if(!currentStudent)return;
+  document.getElementById('stuName').textContent=currentStudent.name+' 同学';
+  try{
+    const r=await fetch(API_BASE+'/api/vocab/student/record?sid='+currentStudent.sid);
+    const d=await r.json();
+    const p=d.progress||{};
+    document.getElementById('stuScore').textContent=p.totalScore||0;
+    document.getElementById('stuWords').textContent=p.totalWords||0;
+    document.getElementById('stuDays').textContent=p.records?p.records.length:0;
+    // 已完成的组
+    const doneGroups={};
+    (p.records||[]).forEach(rec=>{
+      if(rec.unit&&rec.group!==undefined)doneGroups[rec.unit+'_'+rec.group]=true;
+    });
+    localStorage.setItem('vocab_done',JSON.stringify(doneGroups));
+  }catch(e){}
+  renderUnits();
+}
+
+function renderUnits(){
+  const list=document.getElementById('unitList');
+  list.innerHTML='';
+  VOCAB_BOOK.units.forEach((u,i)=>{
+    const div=document.createElement('div');
+    div.className='unit';
+    div.onclick=()=>{currentUnitIdx=i;showPage('groupPage');renderGroups();};
+    div.innerHTML=`<div><div class="u-title">${u.title}</div><div class="u-info">共 ${u.words.length} 词 · ${Math.ceil(u.words.length/WORDS_PER_GROUP)} 组</div></div><div class="u-arrow">›</div>`;
+    list.appendChild(div);
+  });
+}
+
+// ===== 分组选择 =====
+function renderGroups(){
+  const unit=VOCAB_BOOK.units[currentUnitIdx];
+  document.getElementById('groupTitle').textContent=unit.title;
+  const grid=document.getElementById('groupGrid');
+  grid.innerHTML='';
+  const total=Math.ceil(unit.words.length/WORDS_PER_GROUP);
+  const done=JSON.parse(localStorage.getItem('vocab_done')||'{}');
+  for(let i=0;i<total;i++){
+    const cell=document.createElement('div');
+    cell.className='group-cell';
+    const key=unit.title+'_'+i;
+    if(done[key])cell.classList.add('done');
+    cell.textContent=i+1;
+    cell.onclick=()=>startStudy(i);
+    grid.appendChild(cell);
+  }
+}
+
+// ===== 开始练习 =====
+function startStudy(groupIdx){
+  currentGroupIdx=groupIdx;
+  const unit=VOCAB_BOOK.units[currentUnitIdx];
+  const start=groupIdx*WORDS_PER_GROUP;
+  const words=unit.words.slice(start,start+WORDS_PER_GROUP);
+  studyState={
+    words,
+    round:1,
+    queue:[...words],
+    reviewQueue:[],
+    currentWord:null,
+    knownCount:0,
+    spellCorrect:0,
+    aiCache:{},
+  };
+  showPage('studyPage');
+  nextWord();
+}
+
+function nextWord(){
+  const s=studyState;
+  if(s.queue.length===0){
+    if(s.reviewQueue.length>0){
+      s.queue=s.reviewQueue;
+      s.reviewQueue=[];
+      toast('复习不认识的单词');
+    }else if(s.round===1){
+      s.round=2;
+      s.queue=[...s.words];
+      s.reviewQueue=[];
+      document.getElementById('round1Btns').classList.add('hidden');
+      document.getElementById('round2Area').classList.remove('hidden');
+      document.getElementById('roundLabel').textContent='第二轮 · 拼写单词';
+      toast('进入拼写环节');
+    }else{
+      finishStudy();
+      return;
+    }
+  }
+  s.currentWord=s.queue.shift();
+  renderWord();
+}
+
+function renderWord(){
+  const s=studyState;
+  const w=s.currentWord;
+  document.getElementById('wordEn').textContent=w.w;
+  document.getElementById('wordPhonetic').textContent='';
+  document.getElementById('wordPos').textContent=w.pos||'';
+  document.getElementById('wordCn').textContent=w.c;
+  document.getElementById('wordDetail').classList.add('hidden');
+  document.getElementById('exampleContent').innerHTML='生成中...';
+  document.getElementById('spellInput').value='';
+  document.getElementById('spellResult').innerHTML='';
+  document.getElementById('spellInput').focus();
+  // 进度
+  const total=s.words.length*2;
+  const done=(s.round===1?(s.words.length-s.queue.length-s.reviewQueue.length):(s.words.length+s.words.length-s.queue.length-s.reviewQueue.length));
+  document.getElementById('progressFill').style.width=Math.min(100,done/total*100)+'%';
+  // 自动发音
+  setTimeout(()=>speak(w.w),300);
+}
+
+// ===== 第一轮：认识/不认识 =====
+function knowWord(known){
+  const s=studyState;
+  document.getElementById('wordDetail').classList.remove('hidden');
+  if(!known){
+    s.reviewQueue.push(s.currentWord);
+  }
+  // AI 例句
+  loadExample(s.currentWord);
+  // 1.2秒后下一个
+  setTimeout(()=>nextWord(),1500);
+}
+
+async function loadExample(word){
+  const s=studyState;
+  const key=word.w;
+  if(s.aiCache[key]){
+    renderExample(s.aiCache[key]);
+    return;
+  }
+  try{
+    const r=await fetch(API_BASE+'/api/vocab/ai/example',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({word:word.w,chinese:word.c})});
+    const d=await r.json();
+    if(d.ok){
+      s.aiCache[key]=d;
+      if(s.currentWord&&s.currentWord.w===key)renderExample(d);
+    }else{
+      document.getElementById('exampleContent').innerHTML='<span style="color:#a0aec0">例句生成失败</span>';
+    }
+  }catch(e){
+    document.getElementById('exampleContent').innerHTML='<span style="color:#a0aec0">例句生成失败</span>';
+  }
+}
+
+function renderExample(d){
+  const html=`<div class="ex-en">${d.example||'—'}</div><div class="ex-cn">${d.trans||''}</div><div class="ex-usage">📌 ${d.usage||''}</div>`;
+  document.getElementById('exampleContent').innerHTML=html;
+}
+
+// ===== 第二轮：拼写 =====
+function submitSpell(){
+  const s=studyState;
+  const input=document.getElementById('spellInput').value.trim().toLowerCase();
+  const correct=s.currentWord.w.toLowerCase();
+  const resultDiv=document.getElementById('spellResult');
+  if(input===correct){
+    resultDiv.innerHTML='<div class="spell-result correct">✅ 正确！</div>';
+    s.spellCorrect++;
+  }else{
+    resultDiv.innerHTML=`<div class="spell-result wrong">❌ 正确答案：<strong>${s.currentWord.w}</strong></div>`;
+    s.reviewQueue.push(s.currentWord);
+  }
+  setTimeout(()=>nextWord(),1200);
+}
+
+// 回车提交
+document.getElementById('spellInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitSpell()});
+
+// ===== 完成 =====
+async function finishStudy(){
+  const s=studyState;
+  const unit=VOCAB_BOOK.units[currentUnitIdx];
+  const score=10+s.spellCorrect; // 第一轮10分 + 拼写正确每个1分
+  const words=s.words.length;
+  // 提交打卡
+  try{
+    await fetch(API_BASE+'/api/vocab/student/record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      sid:currentStudent.sid,unit:unit.title,group:currentGroupIdx,words,score,round:'complete'
+    })});
+  }catch(e){}
+  // 标记完成
+  const done=JSON.parse(localStorage.getItem('vocab_done')||'{}');
+  done[unit.title+'_'+currentGroupIdx]=true;
+  localStorage.setItem('vocab_done',JSON.stringify(done));
+  document.getElementById('completeInfo').innerHTML=`本组 ${words} 词 · 获得 <strong style="color:#3182ce">${score}</strong> 积分<br>拼写正确 ${s.spellCorrect}/${words}`;
+  showPage('completePage');
+}
+
+function confirmQuit(){
+  if(confirm('确定退出练习？当前进度不会保存')){
+    showPage('groupPage');renderGroups();
+  }
+}
+
+// ===== 自动登录 =====
+(function(){
+  const savedSid=localStorage.getItem('vocab_sid');
+  if(savedSid){
+    document.getElementById('stuSid').value=savedSid;
+    // 不自动登录，让用户点一下
+  }
+})();
+</script>
+</body>
+</html>
