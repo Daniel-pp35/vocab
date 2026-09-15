@@ -311,16 +311,44 @@ let currentRole=null,currentStudent=null,currentUnitIdx=-1,currentGroupIdx=-1,st
 
 // 音效
 let audioCtx=null;
-function getCtx(){if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();return audioCtx}
-function playTone(freq,duration,type){try{const ctx=getCtx();const o=ctx.createOscillator();const g=ctx.createGain();o.type=type||'sine';o.frequency.value=freq;g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+duration);o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+duration)}catch(e){}}
+function getCtx(){try{if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx}catch(e){return null}}
+function playTone(freq,duration,type){try{const ctx=getCtx();if(!ctx)return;const o=ctx.createOscillator();const g=ctx.createGain();o.type=type||'sine';o.frequency.value=freq;g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+duration);o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+duration)}catch(e){}}
 function sfxClick(){playTone(800,0.08,'sine')}
 function sfxCorrect(){playTone(523,0.1);setTimeout(()=>playTone(659,0.1),80);setTimeout(()=>playTone(784,0.15),160)}
 function sfxWrong(){playTone(300,0.15,'sawtooth');setTimeout(()=>playTone(200,0.2,'sawtooth'),100)}
 function sfxSubmit(){playTone(600,0.1,'triangle')}
 
+// 语音朗读 - 统一处理浏览器兼容性
+let speechVoices=[];
+function loadVoices(){if('speechSynthesis' in window){speechVoices=speechSynthesis.getVoices()}}
+if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
+let currentUtterance=null;
+function speak(text){
+  if(!text||!('speechSynthesis' in window))return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US';u.rate=0.85;u.pitch=1;
+    // 优先选英语语音
+    for(let i=0;i<speechVoices.length;i++){
+      if(speechVoices[i].lang&&speechVoices[i].lang.indexOf('en')===0){u.voice=speechVoices[i];break}
+    }
+    u.onerror=function(){console.log('语音播放错误')};
+    currentUtterance=u;
+    speechSynthesis.speak(u);
+    // Safari 修复：长文本可能中断，定时检查
+    if(u&&u.text&&u.text.length>100){
+      const r=setInterval(()=>{
+        if(speechSynthesis.speaking&&!speechSynthesis.paused){speechSynthesis.pause();speechSynthesis.resume()}
+        else clearInterval(r)
+      },10000)
+    }
+  }catch(e){console.log('speak error:',e)}
+}
+function speakWord(){if(studyState&&studyState.currentWord)speak(studyState.currentWord.w)}
+
 function toast(msg){sfxClick();const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active')}
-function speak(text){if('speechSynthesis' in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.85;speechSynthesis.speak(u)}}
 function speakWord(){if(studyState&&studyState.currentWord)speak(studyState.currentWord.w)}
 
 document.querySelectorAll('.tab').forEach(t=>{t.onclick=()=>{sfxClick();document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');const r=t.dataset.role;document.getElementById('studentLogin').classList.toggle('hidden',r!=='student');document.getElementById('teacherLogin').classList.toggle('hidden',r!=='teacher')}});
