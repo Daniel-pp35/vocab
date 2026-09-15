@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>初中英语背单词 · 外研版</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+<title>📚 初中英语背单词 · 外研版2024新版</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(160deg,#0f172a 0%,#1e1b4b 50%,#312e81 100%);min-height:100vh;color:#1e293b;-webkit-font-smoothing:antialiased}
@@ -113,8 +114,8 @@ th{background:#f8fafc;color:#64748b;font-weight:600;font-size:12px;letter-spacin
 
 <div id="loginPage" class="page active">
   <div class="logo">📚</div>
-  <h1>初中英语背单词</h1>
-  <p class="subtitle">外研版2024新版 · 七年级上册</p>
+  <h1>📚 初中英语背单词</h1>
+  <p class="subtitle">外研版2024新版 · 七年级上册 · 师生端</p>
   <p class="devby">Developed by Daniel · 曾智威</p>
   <div class="card">
     <div class="tabs">
@@ -309,47 +310,62 @@ const API_BASE = "https://api.ielts.cab";
 const WORDS_PER_GROUP = 10;
 let currentRole=null,currentStudent=null,currentUnitIdx=-1,currentGroupIdx=-1,studyState=null;
 
-// 音效
+// ==================== 音频模块（真人发音版） ====================
 let audioCtx=null;
-function getCtx(){try{if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx}catch(e){return null}}
-function playTone(freq,duration,type){try{const ctx=getCtx();if(!ctx)return;const o=ctx.createOscillator();const g=ctx.createGain();o.type=type||'sine';o.frequency.value=freq;g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+duration);o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+duration)}catch(e){}}
-function sfxClick(){playTone(800,0.08,'sine')}
-function sfxCorrect(){playTone(523,0.1);setTimeout(()=>playTone(659,0.1),80);setTimeout(()=>playTone(784,0.15),160)}
-function sfxWrong(){playTone(300,0.15,'sawtooth');setTimeout(()=>playTone(200,0.2,'sawtooth'),100)}
-function sfxSubmit(){playTone(600,0.1,'triangle')}
+let audioUnlocked=false;
+document.addEventListener('click',()=>{audioUnlocked=true;try{if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume()}catch(e){}},{once:true});
+document.addEventListener('keydown',()=>{audioUnlocked=true;try{if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume()}catch(e){}},{once:true});
 
-// 语音朗读 - 统一处理浏览器兼容性
-let speechVoices=[];
-function loadVoices(){if('speechSynthesis' in window){speechVoices=speechSynthesis.getVoices()}}
-if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
-let currentUtterance=null;
-function speak(text){
-  if(!text||!('speechSynthesis' in window))return;
+function getCtx(){try{if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx}catch(e){return null}}
+function playTone(freq,duration,type){if(!audioUnlocked)return;try{const ctx=getCtx();if(!ctx)return;const o=ctx.createOscillator();const g=ctx.createGain();o.type=type||'sine';o.frequency.value=freq;g.gain.setValueAtTime(0.25,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+duration);o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+duration)}catch(e){}}
+function sfxClick(){playTone(800,0.06,'sine')}
+function sfxCorrect(){playTone(523,0.08);setTimeout(()=>playTone(659,0.08),70);setTimeout(()=>playTone(784,0.12),140)}
+function sfxWrong(){playTone(280,0.12,'sawtooth');setTimeout(()=>playTone(180,0.18,'sawtooth'),90)}
+function sfxSubmit(){playTone(600,0.08,'triangle')}
+
+// 真人发音 - 有道词典美式发音
+let _currentAudio=null;
+let _audioEl=null;
+function _getAudio(){if(!_audioEl){_audioEl=new Audio();_audioEl.preload='auto'}return _audioEl}
+let _ttsFallbackVoices=[];
+let _ttsFallbackLoaded=false;
+function _loadFallbackVoices(){if('speechSynthesis' in window){_ttsFallbackVoices=speechSynthesis.getVoices();if(_ttsFallbackVoices.length>0)_ttsFallbackLoaded=true}}
+if('speechSynthesis' in window){_loadFallbackVoices();speechSynthesis.onvoiceschanged=_loadFallbackVoices}
+
+function _speakFallback(text){
+  if(!('speechSynthesis' in window))return;
   try{
     speechSynthesis.cancel();
+    if(!_ttsFallbackLoaded)_loadFallbackVoices();
     const u=new SpeechSynthesisUtterance(text);
-    u.lang='en-US';u.rate=0.85;u.pitch=1;
-    // 优先选英语语音
-    for(let i=0;i<speechVoices.length;i++){
-      if(speechVoices[i].lang&&speechVoices[i].lang.indexOf('en')===0){u.voice=speechVoices[i];break}
+    u.lang='en-US';u.rate=0.9;u.pitch=1;u.volume=1;
+    for(let i=0;i<_ttsFallbackVoices.length;i++){
+      if(_ttsFallbackVoices[i].lang&&_ttsFallbackVoices[i].lang.toLowerCase().indexOf('en')===0){u.voice=_ttsFallbackVoices[i];break}
     }
-    u.onerror=function(){console.log('语音播放错误')};
-    currentUtterance=u;
     speechSynthesis.speak(u);
-    // Safari 修复：长文本可能中断，定时检查
-    if(u&&u.text&&u.text.length>100){
-      const r=setInterval(()=>{
-        if(speechSynthesis.speaking&&!speechSynthesis.paused){speechSynthesis.pause();speechSynthesis.resume()}
-        else clearInterval(r)
-      },10000)
-    }
-  }catch(e){console.log('speak error:',e)}
+  }catch(e){}
+}
+
+function speak(text){
+  if(!text)return;
+  stopSpeak();
+  // 每次创建新的Audio对象，避免复用状态错乱
+  const a=new Audio();
+  _currentAudio=a;
+  const url='https://dict.youdao.com/dictvoice?audio='+encodeURIComponent(text)+'&type=2';
+  a.onended=function(){};
+  a.onerror=function(e){console.log('音频播放失败，尝试系统语音:',e);_speakFallback(text)};
+  a.src=url;
+  a.play().catch(function(e){console.log('play失败:',e);_speakFallback(text)});
 }
 function speakWord(){if(studyState&&studyState.currentWord)speak(studyState.currentWord.w)}
+function stopSpeak(){
+  try{if(_currentAudio){_currentAudio.pause();_currentAudio=null}}catch(e){}
+  try{speechSynthesis.cancel()}catch(e){}
+}
 
 function toast(msg){sfxClick();const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
-function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active')}
-function speakWord(){if(studyState&&studyState.currentWord)speak(studyState.currentWord.w)}
+function showPage(id){stopSpeak();document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active')}
 
 document.querySelectorAll('.tab').forEach(t=>{t.onclick=()=>{sfxClick();document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');const r=t.dataset.role;document.getElementById('studentLogin').classList.toggle('hidden',r!=='student');document.getElementById('teacherLogin').classList.toggle('hidden',r!=='teacher')}});
 
@@ -535,7 +551,7 @@ function continueStudy(){
 }
 
 function nextWord(){
-  sfxClick();const s=studyState;s.waitingNext=false;
+  stopSpeak();sfxClick();const s=studyState;s.waitingNext=false;
   document.getElementById('nextBtnArea').classList.add('hidden');
   document.getElementById('wordDetail').classList.add('hidden');
   document.getElementById('spellResult').innerHTML='';
@@ -575,7 +591,7 @@ function renderWord(){
 }
 
 function knowWord(known){
-  sfxClick();const s=studyState;if(s.waitingNext)return;
+  stopSpeak();sfxClick();const s=studyState;if(s.waitingNext)return;
   s.waitingNext=true;
   document.getElementById('wordDetail').classList.remove('hidden');
   if(!known){s.reviewQueue.push(s.currentWord);sfxWrong()}else{sfxCorrect()}
@@ -601,7 +617,7 @@ function speakExample(){
 }
 
 function submitSpell(){
-  sfxSubmit();const s=studyState;if(s.waitingNext)return;
+  stopSpeak();sfxSubmit();const s=studyState;if(s.waitingNext)return;
   s.waitingNext=true;
   const input=document.getElementById('spellInput').value.trim().toLowerCase();
   const correct=s.currentWord.w.toLowerCase();
