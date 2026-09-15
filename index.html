@@ -323,24 +323,28 @@ function sfxCorrect(){playTone(523,0.08);setTimeout(()=>playTone(659,0.08),70);s
 function sfxWrong(){playTone(280,0.12,'sawtooth');setTimeout(()=>playTone(180,0.18,'sawtooth'),90)}
 function sfxSubmit(){playTone(600,0.08,'triangle')}
 
-// 语音朗读 - 有道真人美式发音，系统语音回退
+// 语音朗读 - 有道真人美式发音，系统语音回退，带超时检测
 var _currentAudio=null;
 
 function speak(text, btn){
   if(!text)return;
   stopSpeak();
   if(btn)btn.textContent='⏸';
-  // 有道真人美式发音
   var url='https://dict.youdao.com/dictvoice?audio='+encodeURIComponent(text)+'&type=2';
   var a=new Audio();
   _currentAudio=a;
   var finished=false;
-  function done(){if(!finished){finished=true;if(btn)btn.textContent='🔊'}}
+  var loadTimer=null;
+  function done(){if(!finished){finished=true;if(loadTimer)clearTimeout(loadTimer);if(btn)btn.textContent='🔊'}}
+  function doFallback(){if(!finished){fallbackSpeak(text,btn);done()}}
+  a.oncanplay=function(){if(loadTimer)clearTimeout(loadTimer)};
   a.onended=done;
-  a.onerror=function(){fallbackSpeak(text,btn);done()};
+  a.onerror=doFallback;
   a.src=url;
+  // 3秒加载超时则回退系统语音
+  loadTimer=setTimeout(doFallback,3000);
   var p=a.play();
-  if(p&&p.catch)p.catch(function(){fallbackSpeak(text,btn);done()});
+  if(p&&p.catch)p.catch(doFallback);
 }
 function fallbackSpeak(text,btn){
   if(!('speechSynthesis' in window))return;
@@ -602,7 +606,7 @@ function knowWord(known){
 function loadExample(word){
   if(word.example){
     renderExample({example:word.example,trans:word.trans,usage:word.usage});
-    setTimeout(()=>speak(word.example),500);
+    setTimeout(()=>speak(word.example),800);
   }else{
     document.getElementById('exampleContent').innerHTML='<span style="color:#a0aec0">暂无例句</span>';
   }
